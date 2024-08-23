@@ -14,7 +14,12 @@
           :key="index"
           :style="`--i:${index + 1}`"
         >
-          <img :src="image" alt="image" class="no-pointer-events" />
+          <img
+            :src="image.path"
+            alt="image"
+            class="no-pointer-events"
+            @error="handleImageError"
+          />
         </span>
       </div>
     </div>
@@ -26,7 +31,7 @@
         :key="index"
         class="image-item"
       >
-        <img :src="image" alt="image" />
+        <img :src="image.path" alt="image" />
       </div>
     </div>
   </div>
@@ -83,21 +88,38 @@ export default {
   methods: {
     async fetchImages(tag) {
       try {
-        const ImgDB = `https://api.waifu.pics/sfw/${tag}`;
+        const proxyUrl = "https://api.allorigins.win/get?url=";
+        const ImgDB = `${proxyUrl}https://wallhaven.cc/api/v1/search?q=${encodeURIComponent(
+          tag
+        )}&categories=100&purity=100&sorting=popular&order=desc&page=1&per_page=20`;
 
-        // 创建多个并行请求
-        const requests = Array.from({ length: 20 }, () => axios.get(ImgDB));
+        const response = await axios.get(ImgDB);
+        const responseData = response.data.contents;
 
-        // 并行发送所有请求
-        const responses = await Promise.all(requests);
+        if (responseData) {
+          let data;
+          try {
+            data = JSON.parse(responseData);
+            console.log("Parsed Data:", data);
+          } catch (error) {
+            console.error("Error parsing JSON:", error);
+            return;
+          }
 
-        // 提取图片 URL
-        this.images = responses.map((response) => response.data.url);
+          if (data && data.data) {
+            this.images = data.data.map((item) => ({
+              path: item.path,
+            }));
+          } else {
+            console.error("Unexpected API response structure:", data);
+          }
+        } else {
+          console.error("API response data is empty");
+        }
       } catch (error) {
         console.error("Error fetching images:", error);
       }
     },
-
     logData(data) {
       console.log("输入", data);
     },
@@ -138,7 +160,7 @@ export default {
     startRotation() {
       const rotate = () => {
         if (this.isAnimating) {
-          this.currentYRotation += this.rotationSpeed;
+          this.currentYRotation += this.rotationSpeed; // 使用固定速度旋转
           // 限制旋转角度在 360 度以内
           if (this.currentYRotation >= 360) {
             this.currentYRotation -= 360;
@@ -156,6 +178,9 @@ export default {
 
   beforeUnmount() {
     cancelAnimationFrame(this.animationFrameId); // 清除动画循环
+  },
+  handleImageError(event) {
+    console.error("Image failed to load:", event.target.src);
   },
 };
 </script>
