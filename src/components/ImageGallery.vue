@@ -31,7 +31,7 @@
         :key="index"
         class="image-item"
       >
-        <img :src="image.path" alt="image" />
+        <img :src="image.path" alt="image" class="border" />
       </div>
     </div>
   </div>
@@ -41,7 +41,13 @@
 import axios from "axios";
 
 export default {
-  name: "ImageShow",
+  name: "ImageGallery",
+  props: {
+    receiveDataFromChildOne: {
+      type: String, // Assuming the data is a string. Adjust type if necessary.
+      default: null,
+    },
+  },
   data() {
     return {
       images: [],
@@ -49,26 +55,16 @@ export default {
       startX: 0,
       currentYRotation: 0,
       startYRotation: 0,
-      rotationSpeed: 0.1, // 旋转速度
-      animationFrameId: null, // 用于存储 requestAnimationFrame 的 ID
-      isAnimating: true, // 控制动画状态
+      rotationSpeed: 0.1,
+      animationFrameId: null,
+      isAnimating: true,
     };
   },
-
-  props: {
-    receiveDataFromChildOne: {
-      type: String,
-      default: "",
-    },
-  },
-
   computed: {
     displayImages() {
-      // 只取前 8 张图片用于照片墙
       return this.images.slice(0, 8);
     },
     otherImages() {
-      // 剩余图片
       return this.images.slice(8);
     },
     boxStyle() {
@@ -77,17 +73,33 @@ export default {
       };
     },
   },
-
   watch: {
-    receiveDataFromChildOne(newVal) {
-      this.fetchImages(newVal);
-      this.logData(newVal);
+    receiveDataFromChildOne(newTag) {
+      // Fetch new images when the prop changes
+
+      if (newTag) {
+        this.fetchImages(newTag);
+      }
     },
   },
-
+  mounted() {
+    // Initialize with a default tag or the prop value if available
+    if (this.receiveDataFromChildOne) {
+      this.fetchImages(this.receiveDataFromChildOne);
+    } else if (!this.receiveDataFromChildOne) {
+      this.fetchImages("anime");
+    }
+    this.startRotation();
+  },
+  beforeUnmount() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  },
   methods: {
     async fetchImages(tag) {
       try {
+        this.images = [];
         const proxyUrl = "https://api.allorigins.win/get?url=";
         const ImgDB = `${proxyUrl}https://wallhaven.cc/api/v1/search?q=${encodeURIComponent(
           tag
@@ -100,7 +112,6 @@ export default {
           let data;
           try {
             data = JSON.parse(responseData);
-            console.log("Parsed Data:", data);
           } catch (error) {
             console.error("Error parsing JSON:", error);
             return;
@@ -110,6 +121,9 @@ export default {
             this.images = data.data.map((item) => ({
               path: item.path,
             }));
+
+            this.isAnimating = true;
+            this.startRotation();
           } else {
             console.error("Unexpected API response structure:", data);
           }
@@ -120,48 +134,37 @@ export default {
         console.error("Error fetching images:", error);
       }
     },
-    logData(data) {
-      console.log("输入", data);
-    },
-
     startDrag(event) {
       this.isDragging = true;
       this.startX = event.clientX;
       this.startYRotation = this.currentYRotation;
-      document.body.style.cursor = "grabbing"; // Change cursor when dragging starts
-
-      // 禁用默认的选择行为
+      document.body.style.cursor = "grabbing";
       document.body.style.userSelect = "none";
-
-      // 停止动画循环
       this.isAnimating = false;
       cancelAnimationFrame(this.animationFrameId);
     },
-
     stopDrag() {
       this.isDragging = false;
-      document.body.style.cursor = "default"; // Change cursor when dragging stops
-
-      // 恢复默认的选择行为
+      document.body.style.cursor = "default";
       document.body.style.userSelect = "auto";
-
-      // 启动旋转动画
-      this.isAnimating = true;
-      this.startRotation();
+      if (!this.isAnimating) {
+        this.isAnimating = true;
+        this.startRotation();
+      }
     },
-
     onDrag(event) {
       if (!this.isDragging) return;
-
       const deltaX = event.clientX - this.startX;
-      this.currentYRotation = this.startYRotation + deltaX * 0.2; // Adjust sensitivity as needed
+      this.currentYRotation = this.startYRotation + deltaX * 0.2;
     },
-
     startRotation() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+      }
+
       const rotate = () => {
         if (this.isAnimating) {
-          this.currentYRotation += this.rotationSpeed; // 使用固定速度旋转
-          // 限制旋转角度在 360 度以内
+          this.currentYRotation += this.rotationSpeed;
           if (this.currentYRotation >= 360) {
             this.currentYRotation -= 360;
           }
@@ -170,33 +173,25 @@ export default {
       };
       rotate();
     },
-  },
-
-  mounted() {
-    this.startRotation(); // 启动旋转动画
-  },
-
-  beforeUnmount() {
-    cancelAnimationFrame(this.animationFrameId); // 清除动画循环
-  },
-  handleImageError(event) {
-    console.error("Image failed to load:", event.target.src);
+    handleImageError(event) {
+      console.error("Image failed to load:", event.target.src);
+    },
   },
 };
 </script>
 
 <style scoped>
 .ImageShow {
-  margin-top: 5%; /* Move the entire component 200px down */
+  margin-top: 5%;
 }
 
 .box {
   position: relative;
-  width: 400px; /* Adjust the width and height as needed */
-  height: 200px;
+  width: 200px;
+  height: 180px;
   transform-style: preserve-3d;
   margin: auto;
-  cursor: grab; /* Change cursor to indicate draggable element */
+  cursor: grab;
 }
 
 .box span {
@@ -207,23 +202,22 @@ export default {
   height: 100%;
   transform-origin: center;
   transform-style: preserve-3d;
-  transform: rotateY(calc(var(--i) * 45deg)) translateZ(300px); /* Adjusted translateZ */
+  transform: rotateY(calc(var(--i) * 45deg)) translateZ(400px);
 }
 
 .no-pointer-events {
-  pointer-events: none; /* Disable all mouse events on the image */
+  pointer-events: none;
 }
 
 .box span img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Scale down while keeping the aspect ratio */
+  object-fit: cover;
   display: block;
-  transform: scale(0.8); /* Adjust scale as needed */
 }
 
 .ImageBox {
-  margin-top: 20px; /* Add spacing between photo wall and image display area */
+  margin-top: 100px;
   display: flex;
   flex-wrap: wrap;
 }
@@ -235,7 +229,8 @@ export default {
 
 .image-item img {
   width: 100%;
-  height: auto;
-  object-fit: contain; /* Ensure images fit well within their containers */
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 </style>
