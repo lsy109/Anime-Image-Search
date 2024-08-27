@@ -29,9 +29,66 @@
               热门动漫
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">动漫1</a></li>
-              <li><a class="dropdown-item" href="#">动漫2</a></li>
-              <li><a class="dropdown-item" href="#">动漫3</a></li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="handleDropdownClick('Demon Slayer')"
+                  >鬼灭之刃 (Demon Slayer)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="handleDropdownClick('Attack on Titan')"
+                  >进击巨人 (Attack on Titan)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="handleDropdownClick('Spy x Family')"
+                  >间谍家家酒 (Spy x Family)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="handleDropdownClick('Jujutsu Kaisen')"
+                  >咒术回战 (Jujutsu Kaisen)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="
+                    handleDropdownClick('The Rising of the Shield Hero')
+                  "
+                  >盾之勇者成名录 (The Rising of the Shield Hero)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="handleDropdownClick('Fullmetal Alchemist')"
+                  >钢之炼金术师 (Fullmetal Alchemist)</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  @click.prevent="
+                    handleDropdownClick('Assassination Classroom')
+                  "
+                  >暗杀教室 (Assassination Classroom)</a
+                >
+              </li>
               <!-- 添加更多动漫选项 -->
             </ul>
           </div>
@@ -53,8 +110,12 @@ export default {
 
   methods: {
     sendDataToParent() {
-      console.log("shuru", this.childOneData);
+      // console.log("shuru", this.childOneData);
       this.$emit("sendData", this.childOneData);
+    },
+    handleDropdownClick(animeName) {
+      // console.log("选择的动漫:", animeName);
+      this.$emit("animeSelected", animeName); // 触发事件，传递选择的动漫信息
     },
   },
 };

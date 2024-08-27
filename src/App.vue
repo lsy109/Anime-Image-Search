@@ -3,15 +3,20 @@
     <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
     <!-- 使用 Count 组件 -->
     <!-- <CounterComponent />  -->
-    <HeadBar @sendData="receiveDataFromChildOne" />
-    <ImageGallery :receiveDataFromChildOne="dataFromHeadBar" />
+    <HeadBar
+      @sendData="receiveDataFromChildOne"
+      @animeSelected="sendDataToImageGallery"
+    />
+    <ImageGallery
+      :receiveDataFromChildOne="dataFromHeadBar"
+      :sendDataToImageGallery="dataFromAnimeButton"
+    />
   </div>
 </template>
 
 <script>
 // import CounterComponent from './components/CounterComponent.vue' // 导入 Count 组件
 import HeadBar from "./components/HeadBar.vue";
-
 import ImageGallery from "./components/ImageGallery.vue";
 
 export default {
@@ -27,13 +32,18 @@ export default {
   data() {
     return {
       dataFromHeadBar: null,
+      dataFromAnimeButton: null,
     };
   },
 
   methods: {
     receiveDataFromChildOne(data) {
-      console.log("zujian", data);
+      console.log("搜索框：", data);
       this.dataFromHeadBar = data;
+    },
+    sendDataToImageGallery(data) {
+      console.log("动漫选项", data);
+      this.dataFromAnimeButton = data;
     },
   },
 };

@@ -4,7 +4,7 @@
     <div
       class="ImageShow"
       @mousedown="startDrag"
-      @mouseup="stopDrag"
+      @mouseup="handleMouseUp"
       @mousemove="onDrag"
       @mouseleave="stopDrag"
     >
@@ -19,6 +19,7 @@
             alt="image"
             class="no-pointer-events"
             @error="handleImageError"
+            @click.stop="handleImageClick(image.path)"
           />
         </span>
       </div>
@@ -30,21 +31,30 @@
         v-for="(image, index) in otherImages"
         :key="index"
         class="image-item"
+        @click.stop="handleImageClick(image.path)"
       >
         <img :src="image.path" alt="image" class="border" />
       </div>
+    </div>
+
+    <!-- Fullscreen Image Modal -->
+    <div v-if="isImageOpen" class="image-modal" @click="closeImage">
+      <img :src="selectedImage" alt="Fullscreen Image" class="modal-image" />
     </div>
   </div>
 </template>
 
 <script>
 import axios from "axios";
-
 export default {
   name: "ImageGallery",
   props: {
     receiveDataFromChildOne: {
-      type: String, // Assuming the data is a string. Adjust type if necessary.
+      type: String,
+      default: null,
+    },
+    sendDataToImageGallery: {
+      type: String,
       default: null,
     },
   },
@@ -53,11 +63,16 @@ export default {
       images: [],
       isDragging: false,
       startX: 0,
+      startY: 0,
+      startTime: 0,
       currentYRotation: 0,
       startYRotation: 0,
       rotationSpeed: 0.1,
       animationFrameId: null,
       isAnimating: true,
+      isImageOpen: false,
+      selectedImage: null,
+      clickThreshold: 200, // Adjust this value based on observed click duration
     };
   },
   computed: {
@@ -75,18 +90,20 @@ export default {
   },
   watch: {
     receiveDataFromChildOne(newTag) {
-      // Fetch new images when the prop changes
-
       if (newTag) {
         this.fetchImages(newTag);
       }
     },
+    sendDataToImageGallery(newTag) {
+      if (newTag) {
+        console.log("这里是动漫选项", newTag);
+      }
+    },
   },
   mounted() {
-    // Initialize with a default tag or the prop value if available
     if (this.receiveDataFromChildOne) {
       this.fetchImages(this.receiveDataFromChildOne);
-    } else if (!this.receiveDataFromChildOne) {
+    } else {
       this.fetchImages("anime");
     }
     this.startRotation();
@@ -137,11 +154,26 @@ export default {
     startDrag(event) {
       this.isDragging = true;
       this.startX = event.clientX;
+      this.startY = event.clientY;
       this.startYRotation = this.currentYRotation;
+      this.startTime = Date.now(); // Record start time
       document.body.style.cursor = "grabbing";
       document.body.style.userSelect = "none";
       this.isAnimating = false;
       cancelAnimationFrame(this.animationFrameId);
+    },
+    handleMouseUp(event) {
+      if (this.isDragging) {
+        this.stopDrag();
+      } else {
+        const endTime = Date.now();
+        const duration = endTime - this.startTime;
+        console.log(`Click duration: ${duration}ms`);
+        if (duration < this.clickThreshold) {
+          // Treat it as a click event if the duration is below the threshold
+          this.handleImageClick(event.target.src);
+        }
+      }
     },
     stopDrag() {
       this.isDragging = false;
@@ -155,7 +187,11 @@ export default {
     onDrag(event) {
       if (!this.isDragging) return;
       const deltaX = event.clientX - this.startX;
-      this.currentYRotation = this.startYRotation + deltaX * 0.2;
+      const deltaY = event.clientY - this.startY;
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Only rotate if horizontal drag is more significant
+        this.currentYRotation = this.startYRotation + deltaX * 0.2;
+      }
     },
     startRotation() {
       if (this.animationFrameId) {
@@ -175,6 +211,21 @@ export default {
     },
     handleImageError(event) {
       console.error("Image failed to load:", event.target.src);
+    },
+    handleImageClick(imagePath) {
+      this.selectedImage = imagePath;
+      this.isImageOpen = true;
+      // Disable scroll
+      window.addEventListener("wheel", this.preventScroll, { passive: false });
+    },
+    closeImage() {
+      this.isImageOpen = false;
+      this.selectedImage = null;
+      // Enable scroll
+      window.removeEventListener("wheel", this.preventScroll);
+    },
+    preventScroll(event) {
+      event.preventDefault();
     },
   },
 };
@@ -225,6 +276,9 @@ export default {
 .image-item {
   width: 20%;
   padding: 5px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, z-index 0.3s ease;
 }
 
 .image-item img {
@@ -232,5 +286,34 @@ export default {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.3s ease;
+}
+
+.image-item:hover img {
+  transform: translateY(-10px);
+}
+
+.image-item:hover {
+  z-index: 10;
+}
+
+/* Fullscreen Image Modal */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.modal-image {
+  max-width: 90%;
+  max-height: 90%;
 }
 </style>
