@@ -1,15 +1,13 @@
 const { defineConfig } = require("@vue/cli-service");
 
-module.exports = defineConfig({
-  transpileDependencies: true,
+module.exports = {
   devServer: {
-    proxy: "https://wallhaven.cc",
-  },
-  configureWebpack: {
-    resolve: {
-      fallback: {
-        timers: require.resolve("timers-browserify"),
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        pathRewrite: { "^/api": "" },
       },
     },
   },
-});
+};

@@ -6,8 +6,9 @@
     <HeadBar
       @sendData="receiveDataFromChildOne"
       @animeSelected="sendDataToImageGallery"
+      @rollButtonState="sendRollButtonToImageGallery"
     />
-    <ImageGallery
+    <NewImageGallery
       :receiveDataFromChildOne="dataFromHeadBar"
       :sendDataToImageGallery="dataFromAnimeButton"
     />
@@ -17,8 +18,8 @@
 <script>
 // import CounterComponent from './components/CounterComponent.vue' // 导入 Count 组件
 import HeadBar from "./components/HeadBar.vue";
-import ImageGallery from "./components/ImageGallery.vue";
-
+// import ImageGallery from "./components/ImageGallery.vue";
+import NewImageGallery from "./components/NewImageGallery.vue";
 export default {
   name: "App",
   components: {
@@ -26,13 +27,14 @@ export default {
     // CounterComponent,
     HeadBar,
 
-    ImageGallery,
+    NewImageGallery,
   },
 
   data() {
     return {
       dataFromHeadBar: null,
       dataFromAnimeButton: null,
+      rollButtonFromHead: null,
     };
   },
 
@@ -44,6 +46,10 @@ export default {
     sendDataToImageGallery(data) {
       console.log("动漫选项", data);
       this.dataFromAnimeButton = data;
+    },
+    sendRollButtonToImageGallery(state) {
+      console.log("照片墙", state);
+      this.rollButtonFromHead = state;
     },
   },
 };

@@ -28,7 +28,7 @@
     <!-- Image Display Area -->
     <div class="ImageBox">
       <div
-        v-for="(image, index) in otherImages"
+        v-for="(image, index) in displayImages"
         :key="index"
         class="image-item"
         @click.stop="handleImageClick(image.path)"
@@ -60,7 +60,8 @@ export default {
   },
   data() {
     return {
-      images: [],
+      images: [], // 所有图片的数组
+      loadedImagesCount: 15, // 初始加载的图片数量
       isDragging: false,
       startX: 0,
       startY: 0,
@@ -72,15 +73,13 @@ export default {
       isAnimating: true,
       isImageOpen: false,
       selectedImage: null,
+      isFetching: false, // 是否正在加载更多图片
       clickThreshold: 200, // Adjust this value based on observed click duration
     };
   },
   computed: {
     displayImages() {
-      return this.images.slice(0, 8);
-    },
-    otherImages() {
-      return this.images.slice(8);
+      return this.images.slice(0, this.loadedImagesCount); // 仅显示已加载的图片
     },
     boxStyle() {
       return {
@@ -91,12 +90,16 @@ export default {
   watch: {
     receiveDataFromChildOne(newTag) {
       if (newTag) {
-        this.fetchImages(newTag);
+        for (let i = 0; i < this.getImage; i++) {
+          this.FristTimeFetchImage(newTag);
+        }
       }
     },
     sendDataToImageGallery(newTag) {
       if (newTag) {
-        console.log("这里是动漫选项", newTag);
+        for (let i = 0; i < this.getImage; i++) {
+          this.FristTimeFetchImage(newTag);
+        }
       }
     },
   },
@@ -107,20 +110,22 @@ export default {
       this.fetchImages("anime");
     }
     this.startRotation();
+    window.addEventListener("scroll", this.loadMoreImages); // 监听滚动事件
   },
   beforeUnmount() {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
+    window.removeEventListener("scroll", this.loadMoreImages); // 解除滚动监听
   },
   methods: {
     async fetchImages(tag) {
       try {
-        this.images = [];
+        this.images = []; // 确保每次都清空之前的图片
         const proxyUrl = "https://api.allorigins.win/get?url=";
         const ImgDB = `${proxyUrl}https://wallhaven.cc/api/v1/search?q=${encodeURIComponent(
           tag
-        )}&categories=100&purity=100&sorting=popular&order=desc&page=1&per_page=20`;
+        )}&categories=100&purity=100&sorting=popular&order=desc&page=1&per_page=50`; // 调整每次请求的图片数量
 
         const response = await axios.get(ImgDB);
         const responseData = response.data.contents;
@@ -138,9 +143,6 @@ export default {
             this.images = data.data.map((item) => ({
               path: item.path,
             }));
-
-            this.isAnimating = true;
-            this.startRotation();
           } else {
             console.error("Unexpected API response structure:", data);
           }
@@ -149,6 +151,21 @@ export default {
         }
       } catch (error) {
         console.error("Error fetching images:", error);
+      }
+    },
+    async loadMoreImages() {
+      if (this.isFetching) return; // 防止重复请求
+
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      // 当用户滚动到页面底部附近时触发加载
+      if (scrollTop + windowHeight >= scrollHeight - 100) {
+        this.isFetching = true;
+        this.loadedImagesCount += 10; // 每次加载10张图片
+        console.log("加载更多图片，当前总数:", this.loadedImagesCount);
+        this.isFetching = false;
       }
     },
     startDrag(event) {
@@ -306,10 +323,10 @@ export default {
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  cursor: zoom-out;
   z-index: 1000;
-  cursor: pointer;
 }
 
 .modal-image {
