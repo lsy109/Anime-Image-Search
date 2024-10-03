@@ -89,17 +89,14 @@ export default {
   },
   watch: {
     receiveDataFromChildOne(newTag) {
+      
       if (newTag) {
-        for (let i = 0; i < this.getImage; i++) {
-          this.FristTimeFetchImage(newTag);
-        }
+        this.fetchImages(newTag);
       }
     },
     sendDataToImageGallery(newTag) {
       if (newTag) {
-        for (let i = 0; i < this.getImage; i++) {
-          this.FristTimeFetchImage(newTag);
-        }
+        this.fetchImages(newTag);
       }
     },
   },

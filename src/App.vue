@@ -7,11 +7,16 @@
       @sendData="receiveDataFromChildOne"
       @animeSelected="sendDataToImageGallery"
       @rollButtonState="sendRollButtonToImageGallery"
+      @TagFromHead="sendTagToImageGallery"
+      @aboutClick="toggleComponent"
     />
     <NewImageGallery
+      v-if="currentComponent === 'NewImageGallery'"
       :receiveDataFromChildOne="dataFromHeadBar"
       :sendDataToImageGallery="dataFromAnimeButton"
+      :TagFromHeader="TagFromHead"
     />
+    <About v-else-if="currentComponent === 'About'" />
   </div>
 </template>
 
@@ -20,14 +25,15 @@
 import HeadBar from "./components/HeadBar.vue";
 // import ImageGallery from "./components/ImageGallery.vue";
 import NewImageGallery from "./components/NewImageGallery.vue";
+import About from "./components/About.vue";
 export default {
   name: "App",
   components: {
     // 注册组件
     // CounterComponent,
     HeadBar,
-
     NewImageGallery,
+    About,
   },
 
   data() {
@@ -35,21 +41,31 @@ export default {
       dataFromHeadBar: null,
       dataFromAnimeButton: null,
       rollButtonFromHead: null,
+      TagFromHead: null, //這是傳輸標簽的
+      currentComponent: "NewImageGallery", // 默认显示 NewImageGallery
     };
   },
 
   methods: {
     receiveDataFromChildOne(data) {
-      console.log("搜索框：", data);
       this.dataFromHeadBar = data;
     },
     sendDataToImageGallery(data) {
-      console.log("动漫选项", data);
       this.dataFromAnimeButton = data;
     },
     sendRollButtonToImageGallery(state) {
-      console.log("照片墙", state);
       this.rollButtonFromHead = state;
+    },
+    //這裏將標簽傳入圖片
+    sendTagToImageGallery(data) {
+      this.TagFromHead = data;
+    },
+    //切换组件
+    toggleComponent() {
+      this.currentComponent =
+        this.currentComponent === "NewImageGallery"
+          ? "About"
+          : "NewImageGallery";
     },
   },
 };

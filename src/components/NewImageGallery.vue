@@ -2,7 +2,44 @@
   <div>
     <!-- 旋转照片墙 Image Photo Wall -->
     <!-- 有四个鼠标事件，鼠标点击，松开鼠标，鼠标左右移动，鼠标离开 -->
-    <div class="ImagePhotoWall"></div>
+    <!-- <div class="ImagePhotoWall"></div> -->
+    <!-- 副表頭 -->
+    <div class="subHeader">
+      <label id="search">{{ searchInput }}</label>
+      <button
+        class="button"
+        id="buttonSfw"
+        :class="{ active: sfwActive }"
+        @click="toggleSFW"
+      >
+        sfw
+      </button>
+      <button
+        class="button"
+        id="buttonSketchy"
+        :class="{ active: sketchyActive }"
+        @click="toggleSketchy"
+      >
+        sketchy
+      </button>
+      <button
+        class="button"
+        id="buttonNsfw"
+        :class="{ active: nsfwActive }"
+        @click="toggleNSFW"
+      >
+        nsfw
+      </button>
+
+      <label
+        >时间热度：<a class="clickable-text" @click="chooseHotImg('1D')"
+          >1Day</a
+        >
+        || <a class="clickable-text" @click="chooseHotImg('3D')">3Day</a> ||
+        <a class="clickable-text" @click="chooseHotImg('1W')">1Week</a> ||
+        <a class="clickable-text" @click="chooseHotImg('1M')">1Month</a>
+      </label>
+    </div>
     <!-- 正常照片显示 Image Show Part -->
     <div class="ImageBox">
       <div
@@ -20,6 +57,8 @@
     </div>
     <!-- 點擊放大圖片 -->
     <div v-if="isImageOpen" class="image-modal" @click="closeImage">
+      <!-- 顯示標簽的選項 -->
+
       <img
         :src="selectedImage"
         alt="Fullscreen Image"
@@ -46,9 +85,16 @@ export default {
       type: String,
       default: null,
     },
+    TagFromHeader: {
+      type: String,
+      default: null,
+    },
   },
   mounted() {
-    this.FristTimeFetchImage("anime", 1);
+    for (let i = 0; i < this.getImage; i++) {
+      this.FristTimeFetchImage("anime", i + 1);
+      this.imagepage += 1;
+    }
     window.addEventListener("scroll", this.checkIfNearBottom); //組件挂載完後觸發滾輪檢查
   },
 
@@ -65,26 +111,41 @@ export default {
   },
   watch: {
     receiveDataFromChildOne(newTag) {
-      if (newTag) {
-        this.images = []; //初始化請求的圖
-        this.imageindex = 0; //初始化圖片的數量
+      //如果输入的值与预设不同，则输入重置
+      if (newTag != this.input) {
         this.input = null; //初始化輸入的内容
-        this.imagepage = 0; //初始化圖片的頁數
-        for (let i = 0; i < this.getImage; i++) {
-          this.FristTimeFetchImage(newTag, i + 1);
-        }
+        this.imagepage = 1; //初始化圖片的頁數
+      }
+      this.images = []; //初始化請求的圖
+      this.imageindex = 0; //初始化圖片的數量
+      for (let i = 0; i < this.getImage; i++) {
+        this.FristTimeFetchImage(newTag);
+        this.imagepage += 1;
       }
     },
     //熱門選項
     sendDataToImageGallery(newTag) {
-      if (newTag) {
-        this.images = [];
-        this.imageindex = 0;
+      if (newTag != this.input) {
         this.input = null;
-        this.imagepage = 0;
-        for (let i = 0; i < this.getImage; i++) {
-          this.FristTimeFetchImage(newTag, i + 1);
-        }
+        this.imagepage = 1;
+      }
+      this.searchInput = `Wallpapers found for " ${newTag} "`;
+      this.images = [];
+      this.imageindex = 0;
+      for (let i = 0; i < this.getImage; i++) {
+        this.FristTimeFetchImage(newTag, i + 1);
+        this.imagepage += 1;
+      }
+    },
+    //獲取header的tag
+    TagFromHeader(Tag) {
+      console.log(Tag);
+      this.images = [];
+      this.imageindex = 0;
+      this.imagepage = 1;
+      for (let i = 0; i < this.getImage; i++) {
+        this.TagFetchImg(Tag, i + 1);
+        this.imagepage += 1;
       }
     },
   },
@@ -96,22 +157,66 @@ export default {
       isImageOpen: false, //是否點擊放大圖片
       selectedImage: null, //儲存點擊的圖片
       nearBottomTriggered: false, // 控制是否已经触发过
-      input: null, //儲存輸入的内容
-      imagepage: 0, //儲存獲取的頁數
+      input: "anime", //儲存輸入的内容
+      imagepage: 1, //儲存獲取的頁數
+      purity: 100, //圖片的類型
+      searchInput: null, //标签的值
+      sfwActive: true, // SFW 默认开启
+      sketchyActive: true, // Sketchy 默认开启
+      nsfwActive: false, // NSFW 默认关闭
     };
   },
 
   methods: {
     //组件function
-
+    toggleSFW() {
+      this.sfwActive = !this.sfwActive;
+      if (this.nsfwActive) {
+        this.purity = 111;
+      } else if (this.sketchyActive) {
+        this.purity = 110;
+      } else if (this.sfwActive) {
+        this.purity = 100;
+      } else {
+        this.purity = 100;
+      }
+    },
+    toggleSketchy() {
+      this.sketchyActive = !this.sketchyActive;
+      if (this.nsfwActive) {
+        this.purity = 111;
+      } else if (this.sketchyActive) {
+        this.purity = 110;
+      } else if (this.sfwActive) {
+        this.purity = 100;
+      } else {
+        this.purity = 100;
+      }
+    },
+    toggleNSFW() {
+      this.nsfwActive = !this.nsfwActive;
+      if (this.nsfwActive) {
+        this.purity = 111;
+      } else if (this.sketchyActive) {
+        this.purity = 110;
+      } else if (this.sfwActive) {
+        this.purity = 100;
+      } else {
+        this.purity = 100;
+      }
+    },
     // 初次收索的function
-    async FristTimeFetchImage(tag, page) {
+    async FristTimeFetchImage(tag) {
       try {
         this.input = tag;
-        this.imagepage += 1;
-        const response = await axios.get("http://localhost:3000/api/images", {
-          params: { tag, page },
-        });
+        const purity = this.purity;
+        const page = this.imagepage;
+        const response = await axios.get(
+          "https://anime-serach-backend-c7e708e442ee.herokuapp.com/api/images",
+          {
+            params: { tag, page, purity },
+          }
+        );
         const responseData = response.data.data;
 
         if (responseData) {
@@ -127,13 +232,22 @@ export default {
     //增加图片的function
     async SecondTimeFetchImage() {
       try {
-        const page = this.imagepage;
-        const tag = this.input;
-        const response = await axios.get("http://localhost:3000/api/images", {
-          params: { tag, page },
-        });
+        const page = this.imagepage; //獲取頁數
+        const tag = this.input; //獲取輸入
+        const purity = this.purity; //這裏獲取圖片種類
+        // const response = await axios.get(
+        //   "https://anime-serach-backend-c7e708e442ee.herokuapp.com/api/images",
+        //   {
+        //     params: { tag, page },
+        //   }
+        // );
+        const response = await axios.get(
+          "https://anime-serach-backend-c7e708e442ee.herokuapp.com/api/images",
+          {
+            params: { tag, page, purity },
+          }
+        );
         const responseData = response.data.data;
-
         if (responseData) {
           this.images = this.images.concat(responseData);
           this.imageindex = this.images.length;
@@ -145,6 +259,65 @@ export default {
       } catch (error) {
         console.error("Error fetching images:", error);
       }
+    },
+    //請求標簽的function
+    async TagFetchImg(data) {
+      try {
+        console.log(this.input);
+        const tag = this.input; //獲取輸入
+        const page = this.imagepage; //獲取頁數
+        const purity = this.purity; //這裏獲取圖片種類
+
+        const response = await axios.get(
+          "https://anime-serach-backend-c7e708e442ee.herokuapp.com/sorting-image",
+          {
+            params: { tag, page, purity, data },
+          }
+        );
+        const responseData = response.data.data;
+
+        if (responseData) {
+          this.images = this.images.concat(responseData);
+          this.imageindex = this.images.length;
+        } else {
+          console.error("API response data is empty");
+        }
+
+        this.nearBottomTriggered = false;
+      } catch (error) {
+        console.error("Error fetching images:", error);
+      }
+    },
+    //根据时间選項點擊
+    async chooseHotImg(time) {
+      this.images = []; //初始化請求的圖
+      this.imagepage = 1; //初始化圖片的頁數
+      try {
+        const tag = this.input; //獲取輸入
+        const page = this.imagepage; //獲取頁數
+        const purity = this.purity; //這裏獲取圖片種類
+
+        const response = await axios.get(
+          "https://anime-serach-backend-c7e708e442ee.herokuapp.com/time-sorting-image",
+          {
+            params: { tag, page, purity, time },
+          }
+        );
+        const responseData = response.data.data;
+
+        if (responseData) {
+          this.images = this.images.concat(responseData);
+          this.imageindex = this.images.length;
+        } else {
+          console.error("API response data is empty");
+        }
+
+        this.nearBottomTriggered = false;
+      } catch (error) {
+        console.error("Error fetching images:", error);
+      }
+      this.imagepage += 1;
+      console.log(time);
     },
     //鼠標點擊圖片function
     handleImageClick(e) {
@@ -183,7 +356,8 @@ export default {
     //檢查圖片是否正常顯示
     cheackImageError(img) {
       console.log("顯示失敗", img);
-      this.selectedImage = `http://localhost:3000/proxy-image?url=${img}`;
+      // this.selectedImage = `https://anime-serach-backend-c7e708e442ee.herokuapp.com/proxy-image?url=${img}`;
+      this.selectedImage = `https://anime-serach-backend-c7e708e442ee.herokuapp.com/proxy-image?url=${img}`;
 
       // const foundItem = this.images.find((item) => item.path === img); //在images中尋找點擊圖片的數據
       // this.selectedImage = `http://localhost:3000/api/proxy-image?url=${encodeURIComponent(
@@ -230,8 +404,9 @@ export default {
 }
 
 .ImageBox {
-  margin: 5%;
-
+  margin-top: 1%;
+  margin-left: 5%;
+  margin-right: 5%;
   display: flex;
   flex-wrap: wrap;
 }
@@ -307,6 +482,56 @@ export default {
   max-height: 90%; /* 设置图片的最大高度 */
   width: auto; /* 保持图片宽高比 */
   height: auto; /* 保持图片宽高比 */
-  transition: transform 0.3s ease; /* 添加过渡效果 */
+  transition: tran sform 0.3s ease; /* 添加过渡效果 */
+}
+.subHeader {
+  background-color: rgba(128, 128, 128, 0.5); /* 0.5 表示 50% 透明度 */
+}
+
+/* 熱門選項字體 */
+.clickable-text {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.clickable-text:hover {
+  color: darkblue;
+}
+
+.buttonLabel {
+  background-color: azure;
+}
+.button {
+  color: #ffffff; /* 设置字体颜色为橙色 */
+  background-color: rgb(70, 70, 67);
+  font-weight: bold; /* 设置加粗字体 */
+  font-size: 15px;
+  border-radius: 10px; /* 设置圆角为10px */
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1); /* 设置边框阴影 */
+}
+#buttonSfw.active {
+  color: greenyellow;
+  background-color: green;
+}
+#buttonSfw:hover {
+  color: greenyellow;
+  background-color: green;
+}
+#buttonSketchy.active {
+  color: rgb(60, 149, 38);
+  background-color: yellow;
+}
+#buttonSketchy:hover {
+  color: rgb(60, 149, 38);
+  background-color: yellow;
+}
+#buttonNsfw.active {
+  color: rgb(93, 10, 10);
+  background-color: rgb(184, 36, 36);
+}
+#buttonNsfw:hover {
+  color: rgb(93, 10, 10);
+  background-color: rgb(184, 36, 36);
 }
 </style>

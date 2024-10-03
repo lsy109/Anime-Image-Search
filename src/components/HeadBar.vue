@@ -16,11 +16,25 @@
             搜索
             <i class="bi bi-search"></i>
           </button>
+          <button
+            class="btn btn-secondary me-2 w-50"
+            @click="getTagImg('toplist')"
+          >
+            Toplist
+            <i class="bi bi-search"></i>
+          </button>
+          <button
+            class="btn btn-secondary me-2 w-50"
+            @click="getTagImg('random')"
+          >
+            Random
+            <i class="bi bi-search"></i>
+          </button>
         </div>
         <div class="right-section">
           <!-- Dropdown menu -->
           <div class="btn-group me-2">
-            <label class="switch-label">
+            <!-- <label class="switch-label">
               <input
                 class="mui-switch mui-switch-animbg"
                 type="checkbox"
@@ -30,7 +44,7 @@
               <span class="switch-text">{{
                 isRotating ? "停止旋转" : "旋转"
               }}</span>
-            </label>
+            </label> -->
             <button
               type="button"
               class="btn btn-secondary dropdown-toggle"
@@ -39,6 +53,7 @@
             >
               热门动漫
             </button>
+
             <ul class="dropdown-menu">
               <!-- Dropdown menu items -->
               <li>
@@ -105,7 +120,7 @@
             </ul>
           </div>
 
-          <button class="btn btn-secondary">关于</button>
+          <button class="btn btn-secondary" @click="aboutClick">关于</button>
         </div>
       </div>
     </nav>
@@ -131,6 +146,16 @@ export default {
     },
     toggleRotation() {
       this.$emit("rollButtonState", this.isRotating ? "开始旋转" : "停止旋转");
+    },
+    //傳入標簽選項
+    getTagImg(Tag) {
+      console.log("tag點擊");
+      this.$emit("TagFromHead", Tag); //將選項傳入圖片區塊
+    },
+    //关于点击
+    aboutClick() {
+      console.log("About");
+      this.$emit("aboutClick");
     },
   },
 };

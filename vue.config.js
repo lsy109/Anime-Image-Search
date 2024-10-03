@@ -4,7 +4,7 @@ module.exports = {
   devServer: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "https://prismatic-snickerdoodle-033dc5.netlify.app/",
         changeOrigin: true,
         pathRewrite: { "^/api": "" },
       },
